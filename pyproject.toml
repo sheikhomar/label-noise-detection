@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "label-noise-detection"
+version = "0.1.0"
+description = "A selection of label noise detection algorithms for tabular data."
+authors = ["Omar Ali Sheikh <sheikhomar@users.noreply.github.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "3.8.10"
+numba = "^0.55.1"
+scipy = "^1.8.0"
+pandas = "^1.4.2"
+click = "^8.1.2"
+scikit-learn = "^1.0.2"
+
+
+[tool.poetry.dev-dependencies]
+jupyterlab = "^3.3.3"
+jupyter-dash = "^0.4.2"
+plotly = "^5.7.0"
+
+
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
