@@ -56,9 +56,10 @@ class EditedNearestNeighborDetector:
         n_points = X.shape[0]
         likely_mislabelled_indices = []
         for i in range(n_points):
-            knn = KNeighborsClassifier(n_neighbors=self._k)
-            knn.fit(X=np.delete(X, i, axis=0), y=np.delete(y, i))
-            pred_y = knn.predict(X[[i]])
+            # knn = KNeighborsClassifier(n_neighbors=self._k)
+            # knn.fit(X=np.delete(X, i, axis=0), y=np.delete(y, i))
+            # pred_y = knn.predict(X[[i]])
+            pred_y = compute_knn(i, self._k, X, y)
             given_y = y[i]
             if pred_y != given_y:
                 likely_mislabelled_indices.append(i)
