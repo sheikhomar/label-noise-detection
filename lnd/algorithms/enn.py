@@ -46,7 +46,7 @@ def compute_knn(target_point_index, k: int, X: np.ndarray, y: np.ndarray) -> int
     return selected_label
 
 
-class EditedNearestNeighborDetector:
+class EditedNearestNeighborDetector(Algorithm):
     def __init__(self, k: int) -> None:
         self._k = k
 
