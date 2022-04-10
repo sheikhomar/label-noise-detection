@@ -39,7 +39,7 @@ def compute_knn(target_point_index, k: int, X: np.ndarray, y: np.ndarray) -> int
             label_votes[label] = label_votes.get(label) + 1
         else:
             label_votes[label] = 1
-        if selected_label_votes > label_votes[label]:
+        if label_votes[label] > selected_label_votes:
             selected_label = label
             selected_label_votes = label_votes[label]
 
