@@ -8,6 +8,44 @@ from lnd.algorithms import Algorithm
 from lnd.data.dataset import DataSet
 
 
+@numba.jit(cache=True, nopython=True, parallel=False, fastmath=True, boundscheck=False, nogil=True)
+def compute_squared_euclidean_distances(target_point_index, X: np.ndarray) -> np.ndarray:
+    n_points, n_dim = X.shape[0], X.shape[1]
+    distances = np.zeros(n_points)
+    x_target = X[target_point_index].copy()
+    for i in numba.prange(n_points):
+        if i != target_point_index:
+            distance = 0
+            for j in range(n_dim):
+                distance += (X[i, j] - x_target[j])**2
+            distances[i] = distance
+    return distances
+
+
+@numba.jit(cache=True, nopython=True, parallel=False, fastmath=True, boundscheck=False, nogil=True)
+def compute_knn(target_point_index, k: int, X: np.ndarray, y: np.ndarray) -> int:
+    distances = compute_squared_euclidean_distances(
+        target_point_index=target_point_index,
+        X=X
+    )
+    knn_indices = distances.argsort()[:k+1]
+    knn_classes = y[knn_indices].copy()
+    
+    label_votes = dict()
+    selected_label = -1
+    selected_label_votes = 0
+    for label in knn_classes:
+        if label in label_votes:
+            label_votes[label] = label_votes.get(label) + 1
+        else:
+            label_votes[label] = 1
+        if selected_label_votes > label_votes[label]:
+            selected_label = label
+            selected_label_votes = label_votes[label]
+
+    return selected_label
+
+
 class EditedNearestNeighborDetector:
     def __init__(self, k: int) -> None:
         self._k = k
