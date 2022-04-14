@@ -1,16 +1,14 @@
-import json, shutil
+import json, os
 
 from datetime import datetime
 from importlib import import_module
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
 import click
-import pandas as pd
-import numpy as np
 
 from lnd.algorithms import Algorithm
-from lnd.data.dataset import DataSet, load_dataset
+from lnd.data.dataset import load_dataset
 
 
 def type_1_error_rate(
@@ -70,7 +68,14 @@ def noise_elimination_precision_score(
 
 
 class Evaluator:
-    def __init__(self, *, algorithm_name: str, data_path: str, noise_type: str, random_seed: int, output_dir: str) -> None:
+    def __init__(self, *, 
+            algorithm_name: str,
+            algorithm_params: str,
+            data_path: str,
+            noise_type: str,
+            random_seed: int,
+            output_dir: str
+        ) -> None:
         self._algorithm_name = algorithm_name
         self._data_path = data_path
         self._noise_type = noise_type
@@ -80,6 +85,13 @@ class Evaluator:
             self._output_dir = self._output_dir / self._algorithm_name
         experiment_no = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         self._output_dir = self._output_dir / experiment_no
+        if algorithm_params is not None and len(algorithm_params) > 0:
+            if os.path.exists(algorithm_params):
+                with open(algorithm_params, "r") as fp:
+                    self._algorithm_params = json.load(fp)
+            else:
+                self._algorithm_params = json.loads(algorithm_params)
+        print(f"Algorithm params: {self._algorithm_params}")
 
     def run(self) -> None:
         # Load label noise detection algorithm.
@@ -114,6 +126,13 @@ class Evaluator:
     required=True,
 )
 @click.option(
+    "-p",
+    "--algorithm-params",
+    type=click.STRING,
+    default="",
+    required=False,
+)
+@click.option(
     "-i",
     "--input-path",
     type=click.STRING,
@@ -139,6 +158,7 @@ class Evaluator:
 )
 def main(
     algorithm_name: str,
+    algorithm_params: str,
     input_path: str,
     noise_type: str,
     random_seed: int,
@@ -146,6 +166,7 @@ def main(
 ):
     Evaluator(
         algorithm_name=algorithm_name,
+        algorithm_params=algorithm_params,
         data_path=input_path,
         noise_type=noise_type,
         random_seed=random_seed,
