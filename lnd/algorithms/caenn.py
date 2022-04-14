@@ -31,9 +31,6 @@ class ConsensusAllKEditedNearestNeighborDetector(Algorithm):
                 given_y = y[i]
                 if top_pred_y != given_y:
                     likely_mislabelled_indices.append(i)
-            else:
-                print(f"All not the same: {preds_y}")
-                print(f" Real label: {y[i]}  - max label: {np.argmax(np.bincount(preds_y)) }")
         return likely_mislabelled_indices
 
 
