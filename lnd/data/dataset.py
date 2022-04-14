@@ -118,6 +118,20 @@ class UCIPPDataSet(DataSet):
         raw_data, meta = loadarff(file_path)
         self._df_data = pd.DataFrame(raw_data, columns=meta.names())
 
+        # Manually define the dtypes of each column in the dataframe.
+        # TODO: Make it more efficient!
+        for attr in meta.names():
+            aarf_type, range = meta[attr]
+            if aarf_type == "numeric":
+                self._df_data[attr] = self._df_data[attr].astype(np.float32)
+            elif aarf_type == "nominal":
+                # Note: it is necessary to cast values to string before setting
+                # dtype to `category` because `loadarff` does not convert categorical
+                # values to string but keeps them as bytes.
+                self._df_data[attr] = self._df_data[attr].astype(str).astype("category")
+            else:
+                raise ValueError(f"Do not know how to handle ARFF type: {aarf_type}")
+
         self._numerical_attrs = [c for c in self._df_data.columns if c.startswith("V")]
         self._categorical_attrs = []
         self._binary_attrs = []
