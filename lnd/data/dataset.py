@@ -30,7 +30,7 @@ class DataSet(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def classes(self) -> List[str]:
+    def class_names(self) -> List[str]:
         """The set of classes in this data set (i.e., the label space)."""
         raise NotImplementedError
 
@@ -99,7 +99,7 @@ class UCIPPDataSet(DataSet):
         return self._label_encoder.classes_.size
 
     @property
-    def classes(self) -> List[str]:
+    def class_names(self) -> List[str]:
         return self._label_encoder.classes_
 
     @property
