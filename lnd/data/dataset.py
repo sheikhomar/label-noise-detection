@@ -10,6 +10,7 @@ from scipy.io.arff import loadarff
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
+from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 
 
@@ -20,6 +21,13 @@ class PairwiseDataSplit:
     class1_data: pd.DataFrame
     class2_index: int
     class2_data: pd.DataFrame
+
+
+@dataclass
+class TrainTestSplit:
+    fold_no: int
+    train_data: pd.DataFrame
+    test_data: pd.DataFrame
 
 
 @dataclass
@@ -85,6 +93,19 @@ class DataSet(abc.ABC):
                 class1_data=self._get_raw_data_frame().iloc[class1_indices].copy(),
                 class2_index=class2,
                 class2_data=self._get_raw_data_frame().iloc[class2_indices].copy(),
+            )
+
+    def split_k_fold(self,  n_splits: int, shuffle: bool = True, random_state=None) -> Generator[TrainTestSplit, None, None]:
+        """Partition the labelled data into a number of folds."""
+        skf = StratifiedKFold(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
+        df_data = self._get_raw_data_frame()
+        X = df_data
+        y = df_data[self.label_attribute]
+        for fold, (train_index, test_index) in enumerate(skf.split(X=X, y=y)):
+            yield TrainTestSplit(
+                fold=fold,
+                train_data=df_data.iloc[train_index],
+                test_data=df_data.iloc[test_index],
             )
 
 
