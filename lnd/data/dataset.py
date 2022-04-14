@@ -56,6 +56,12 @@ class DataSet(abc.ABC):
         """The name for the label attribute."""
         raise NotImplementedError
 
+    @property
+    @abc.abstractmethod
+    def feature_attributes(self) -> List[str]:
+        """The names of the features."""
+        raise NotImplementedError
+
     @abc.abstractmethod
     def create_feature_transformer(self) -> TransformerMixin:
         """Creates a transformer to convert the raw data into usable feature vectors."""
@@ -143,6 +149,10 @@ class UCIPPDataSet(DataSet):
     @property
     def label_attribute(self) -> str:
         return "Class"
+
+    @property
+    def feature_attributes(self) -> List[str]:
+        return self._numerical_attrs + self._categorical_attrs + self._binary_attrs
 
     def create_feature_transformer(self) -> TransformerMixin:
         numeric_transformer = StandardScaler()
