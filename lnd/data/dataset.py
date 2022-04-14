@@ -99,11 +99,9 @@ class DataSet(abc.ABC):
         """Partition the labelled data into a number of folds."""
         skf = StratifiedKFold(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
         df_data = self._get_raw_data_frame()
-        X = df_data
-        y = df_data[self.label_attribute]
-        for fold, (train_index, test_index) in enumerate(skf.split(X=X, y=y)):
+        for fold, (train_index, test_index) in enumerate(skf.split(X=df_data.index, y=self.labels)):
             yield TrainTestSplit(
-                fold=fold,
+                fold_no=fold,
                 train_data=df_data.iloc[train_index],
                 test_data=df_data.iloc[test_index],
             )
