@@ -66,12 +66,26 @@ class DataSet(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def _get_raw_data_frame(self) -> pd.DataFrame:
+        """Returns the internal data frame."""
+        raise NotImplementedError
+
     def split_one_vs_one(self) -> Generator[PairwiseDataSplit, None, None]:
         """Partition the labelled data into pairs of classes using the one-vs-one approach.
         
         Notice that each split contains data points assigned a label in that pair.
         """
-        raise NotImplementedError
+        class_pairings = itertools.combinations(np.unique(self.labels), 2)
+        for split_no, (class1, class2) in enumerate(class_pairings):
+            class1_indices = np.where(self.labels == class1)[0]
+            class2_indices = np.where(self.labels == class2)[0]
+            yield PairwiseDataSplit(
+                split_no=split_no,
+                class1_index=class1,
+                class1_data=self._get_raw_data_frame().iloc[class1_indices].copy(),
+                class2_index=class2,
+                class2_data=self._get_raw_data_frame().iloc[class2_indices].copy(),
+            )
 
 
 class UCIPPDataSet(DataSet):
@@ -92,6 +106,9 @@ class UCIPPDataSet(DataSet):
         self._label_encoder.fit(self._df_data[self.label_attribute])
         self._y_given = self._label_encoder.transform(self._df_data[self.label_attribute])
     
+    def _get_raw_data_frame(self) -> pd.DataFrame:
+        return self._df_data
+
     @property
     def size(self) -> int:
         return self._df_data.shape[0]
@@ -127,19 +144,6 @@ class UCIPPDataSet(DataSet):
     @property
     def labels(self) -> np.ndarray:
         return self._y_given
-    
-    def split_one_vs_one(self) -> Generator[PairwiseDataSplit, None, None]:
-        class_pairings = itertools.combinations(np.unique(self.labels), 2)
-        for split_no, (class1, class2) in enumerate(class_pairings):
-            class1_indices = np.where(self.labels == class1)[0]
-            class2_indices = np.where(self.labels == class2)[0]
-            yield PairwiseDataSplit(
-                split_no=split_no,
-                class1_index=class1,
-                class1_data=self._df_data.iloc[class1_indices].copy(),
-                class2_index=class2,
-                class2_data=self._df_data.iloc[class2_indices].copy(),
-            )
 
 
 def load_dataset(file_path: str) -> DataSet:
