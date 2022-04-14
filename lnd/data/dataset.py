@@ -16,8 +16,10 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler
 @dataclass
 class PairwiseDataSplit:
     split_no: int
-    item1: pd.DataFrame
-    item2: pd.DataFrame
+    class1_index: int
+    class1_data: pd.DataFrame
+    class2_index: int
+    class2_data: pd.DataFrame
 
 
 @dataclass
@@ -133,8 +135,10 @@ class UCIPPDataSet(DataSet):
             class2_indices = np.where(self.labels == class2)[0]
             yield PairwiseDataSplit(
                 split_no=split_no,
-                item1=self._df_data.iloc[class1_indices].copy(),
-                item2=self._df_data.iloc[class2_indices].copy(),
+                class1_index=class1,
+                class1_data=self._df_data.iloc[class1_indices].copy(),
+                class2_index=class2,
+                class2_data=self._df_data.iloc[class2_indices].copy(),
             )
 
 
