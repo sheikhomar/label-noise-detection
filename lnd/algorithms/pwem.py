@@ -29,7 +29,7 @@ class PairwiseExpectationMaximization(Algorithm):
     def compute_confidence_scores(self, data_set: DataSet) -> np.ndarray:
         scores = np.zeros(shape=(data_set.size, data_set.n_classes))
         for split in data_set.split_one_vs_one():
-            print(f"Train GMM for split {split.split_no}")
+            print(f"Train GMM for split {split.split_no} -- {split.class1_index} vs {split.class2_index}")
             feature_transformer = data_set.create_feature_transformer()
             label_transformer = LabelEncoder()
 
