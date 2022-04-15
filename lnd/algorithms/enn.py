@@ -28,7 +28,7 @@ def compute_knn(target_point_index, k: int, X: np.ndarray, y: np.ndarray) -> int
         target_point_index=target_point_index,
         X=X
     )
-    knn_indices = distances.argsort()[:k+1]
+    knn_indices = distances.argsort()[1:k+1]
     knn_classes = y[knn_indices].copy()
     
     label_votes = dict()
