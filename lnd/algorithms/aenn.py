@@ -21,7 +21,7 @@ class AllKEditedNearestNeighborDetector(Algorithm):
         for k in range(1, self._max_k+1):
             print(f"Running for k={k}")
             for i in range(n_points):
-                pred_y = compute_knn(i, k, X, y)
+                pred_y, _ = compute_knn(i, k, X, y)
                 given_y = y[i]
                 if pred_y != given_y:
                     likely_mislabelled_indices.append(i)

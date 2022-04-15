@@ -43,7 +43,7 @@ def compute_knn(target_point_index, k: int, X: np.ndarray, y: np.ndarray) -> int
             selected_label = label
             selected_label_votes = label_votes[label]
 
-    return selected_label
+    return selected_label, label_votes
 
 
 class EditedNearestNeighborDetector(Algorithm):
@@ -59,7 +59,7 @@ class EditedNearestNeighborDetector(Algorithm):
             # knn = KNeighborsClassifier(n_neighbors=self._k)
             # knn.fit(X=np.delete(X, i, axis=0), y=np.delete(y, i))
             # pred_y = knn.predict(X[[i]])
-            pred_y = compute_knn(i, self._k, X, y)
+            pred_y, _ = compute_knn(i, self._k, X, y)
             given_y = y[i]
             if pred_y != given_y:
                 likely_mislabelled_indices.append(i)

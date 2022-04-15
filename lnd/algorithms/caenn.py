@@ -22,7 +22,7 @@ class ConsensusAllKEditedNearestNeighborDetector(Algorithm):
             k_range = list(range(1, self._max_k+1, 2))
             preds_y = np.zeros(len(k_range), dtype=np.int32)
             for j, k in enumerate(k_range):
-                preds_y[j] = compute_knn(i, k, X, y)
+                preds_y[j], _ = compute_knn(i, k, X, y)
             
             # If all k-NN rules agree on a label, we assume
             # the predict label is correct.

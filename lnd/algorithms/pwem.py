@@ -9,7 +9,6 @@ from sklearn.mixture import BayesianGaussianMixture, GaussianMixture
 
 from lnd.algorithms import Algorithm
 from lnd.data.dataset import DataSet
-from lnd.algorithms.enn import compute_knn
 
 
 class PairwiseExpectationMaximization(Algorithm):
