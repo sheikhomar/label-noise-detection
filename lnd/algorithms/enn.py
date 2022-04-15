@@ -43,7 +43,12 @@ def compute_knn(target_point_index, k: int, X: np.ndarray, y: np.ndarray) -> int
             selected_label = label
             selected_label_votes = label_votes[label]
 
-    return selected_label, label_votes
+    return selected_label, label_votes, knn_indices
+
+@numba.jit(cache=True, nopython=True, parallel=False, fastmath=True, boundscheck=False, nogil=True)
+def predict_knn(target_point_index, k: int, X: np.ndarray, y: np.ndarray) -> int:
+    selected_label, label_votes, knn_knn_indices = compute_knn(target_point_index=target_point_index, k=k, X=X, y=y)
+    return selected_label
 
 
 class EditedNearestNeighborDetector(Algorithm):
@@ -59,7 +64,7 @@ class EditedNearestNeighborDetector(Algorithm):
             # knn = KNeighborsClassifier(n_neighbors=self._k)
             # knn.fit(X=np.delete(X, i, axis=0), y=np.delete(y, i))
             # pred_y = knn.predict(X[[i]])
-            pred_y, _ = compute_knn(i, self._k, X, y)
+            pred_y = predict_knn(i, self._k, X, y)
             given_y = y[i]
             if pred_y != given_y:
                 likely_mislabelled_indices.append(i)

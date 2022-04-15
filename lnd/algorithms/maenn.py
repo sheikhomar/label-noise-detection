@@ -6,7 +6,7 @@ from sklearn.neighbors import KNeighborsClassifier
 
 from lnd.algorithms import Algorithm
 from lnd.data.dataset import DataSet
-from lnd.algorithms.enn import compute_knn
+from lnd.algorithms.enn import predict_knn
 
 
 class MajorityAllKEditedNearestNeighborDetector(Algorithm):
@@ -22,7 +22,7 @@ class MajorityAllKEditedNearestNeighborDetector(Algorithm):
             k_range = list(range(1, self._max_k+1, 2))
             preds_y = np.zeros(len(k_range), dtype=np.int32)
             for j, k in enumerate(k_range):
-                preds_y[j], _ = compute_knn(i, k, X, y)
+                preds_y[j] = predict_knn(i, k, X, y)
             
             # The predicted label is a majority voting of
             # all k-NN rules.
