@@ -71,32 +71,22 @@ class BlameBasedNoiseDetector(Algorithm):
                     if y[i] != y[nearest_neighbor_index]:
                         dissimilarity_sets[i].add(nearest_neighbor_index)
 
-        #print(dissimilarity_sets)
-
         liability_counts = np.array([len(lset) for lset in liability_sets])
 
         # The remaining set is the set of points in the original 
         # traning set sorted in descending order by the number
         # of items in the liability set. In the original paper,
         # this set is called TSet.
-        remaining_set = np.argsort(liability_counts)[::-1]
+        remaining_set = np.argsort(liability_counts)[::-1].tolist()
 
-        print(remaining_set)
-        print(liability_counts)
-        print(liability_counts[remaining_set])
-        
         # Harmful points are data points which caused some level of harm
         # in the correct classification of other points. Basically, these
         # points have a liability set which contains at least one point.
         harmful_points = [i for i in remaining_set if liability_counts[i] > 0]
 
-        print(f"TSet:\n{harmful_points}")
-
-        c = remaining_set[0]
+        c = harmful_points.pop(0)
 
         while len(liability_sets[c]) > 0:
-            print(f"Processing 'harmful' point {c}")
-
             # At this point, we know that data point `c` causes some level
             # of harm to other points because its liability set contains at
             # least one data point. The deletion policy of BBNRv1 is 
@@ -107,20 +97,18 @@ class BlameBasedNoiseDetector(Algorithm):
             # First, remove data point `c`.
             remaining_set.remove(c)
 
-            is_misclassified = False
             X_filtered = X[remaining_set]
             y_filtered = y[remaining_set]
-            print(f" Shape: {X_filtered.shape}")
 
             # Check whether each point in the coverage set can
             # correctly be classified without including point `c`
             # the training set.
+            is_misclassified = False
             for x in coverage_sets[c]:
                 x_given_label = y[x]
                 x_pred_label = predict_knn(target_point_index=x, k=self._k, X=X_filtered, y=y_filtered)
                 
                 if x_given_label != x_pred_label:
-                    print(f" Misclassified point {x}, given label={x_given_label}  pred label={x_pred_label} ")
                     is_misclassified = True
                     break
 
@@ -128,26 +116,37 @@ class BlameBasedNoiseDetector(Algorithm):
                 # Point `c` cannot be removed because otherwise
                 # it will cause at least one of the points in its
                 # coverage set to be misclassified.
-                harmful_points.append(c)
-                # c = harmful_points[0]
-                print("")
+                remaining_set.append(c)
             else:
                 # Since the harmful point `c` does not cause any
                 # misclassification, we can safely remove it.
                 # BBNRv2 rebuilds the model once `c` is removed.
-                for l in liability_sets[c]:
-                    pass
-                pass
+                points_removed += 1
+                recompute_liability_sets = False
+                for l in liability_sets[c].copy():
+                    l_given_label = y[l]
+                    l_pred_label = predict_knn(target_point_index=l, k=self._k, X=X_filtered, y=y_filtered)
+                    if l_given_label == l_pred_label:
+                        for d in dissimilarity_sets[l]:
+                            liability_sets[d].remove(l)
+                            recompute_liability_sets = True
+                
+                if recompute_liability_sets:
+                    liability_counts = np.array([len(lset) for lset in liability_sets])
+                    sorted_by_liabilities = np.argsort(liability_counts)[::-1].tolist()
+                    old_remaining_set = [i for i in remaining_set]
+                    remaining_set = [i for i in sorted_by_liabilities if i in old_remaining_set]
+                    harmful_points = [i for i in remaining_set if liability_counts[i] > 0]
 
             if len(harmful_points) > 0:
-                c = harmful_points[0]
-                print(f" Next point: {c}")
+                c = harmful_points.pop(0)
             else:
                 break
-            
-        return []
+        
+        all_points = set([i for i in range(n_points)])
+        removed_points = list(all_points - set(remaining_set))
+        return removed_points
 
-    def _can_correctly_classify(training_set: np.array, )
 
 def create() -> Algorithm:
     return BlameBasedNoiseDetector(k=5)
