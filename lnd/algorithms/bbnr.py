@@ -121,7 +121,6 @@ class BlameBasedNoiseDetector(Algorithm):
                 # Since the harmful point `c` does not cause any
                 # misclassification, we can safely remove it.
                 # BBNRv2 rebuilds the model once `c` is removed.
-                points_removed += 1
                 recompute_liability_sets = False
                 for l in liability_sets[c].copy():
                     l_given_label = y[l]
