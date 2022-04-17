@@ -1,13 +1,70 @@
 from typing import List
+
 import numpy as np
 import numba
-
-
-from sklearn.neighbors import KNeighborsClassifier
 
 from lnd.algorithms import Algorithm
 from lnd.data.dataset import DataSet
 from lnd.algorithms.enn import compute_knn, predict_knn
+
+
+#@numba.jit(cache=True, nopython=True, parallel=False, fastmath=True, boundscheck=False, nogil=True)
+def compute_bbnr_sets(X: np.ndarray, y: np.ndarray, k: int):
+    # Let `a` be the current point i.
+    # Let `b` be one of k-nearest neighbors of i.
+    #
+    # We say that the data point `b` contributes to the correct
+    # classification of the current data point `a`, denoted
+    # Classifies(a,b), if all of the following conditions hold:
+    #  1) Data point `b` is a k-nearest neighbor of `a`
+    #  2) Data point `a` is correctly classified
+    #  3) Data point `b` has the same label as `a`
+    #
+    # We say that the data point `b` contributes to the
+    # incorrect classification of the current data point `a`,
+    # denoted Misclassifies(a,b), if all of the following hold:
+    #  1) Data point `b` is a k-nearest neighbor of `a`
+    #  2) Data point `a` is misclassified
+    #  3) Data point `b` has a different label than `a`
+
+    n_points = X.shape[0]
+    
+    # The coverage set of a given data point `b` contains
+    # all data points for which point `b` contributed to their
+    # correct classifications. The covarage set of a point `b`
+    # measures the level of "good" caused by point `b`.
+    coverage_sets = [set() for _ in range(n_points)]
+
+    # The liability set of a given data point `b` contains
+    # all data points for which point `b` contributed to their
+    # incorrect classifications. The liability set of a point `b`
+    # measures the level of "harm" caused by point `b`.
+    liability_sets = [set() for _ in range(n_points)]
+
+    # The dissimilarity set of a given point `b` contains
+    # the nearest neighbors of `b` which contribute to
+    # the misclassification of point `b`.
+    dissimilarity_sets = [set() for _ in range(n_points)]
+    
+    # Build the different sets
+    for i in numba.prange(n_points):
+        pred_label, votes, knn_indices = compute_knn(i, k, X, y)
+
+        for nearest_neighbor_index in knn_indices:
+            
+            if y[i] == pred_label: # Correctly classified
+                if y[i] == y[nearest_neighbor_index]:
+                    coverage_sets[nearest_neighbor_index].add(i)
+            
+            else: # Misclassified
+                if y[i] != y[nearest_neighbor_index]:
+                    liability_sets[nearest_neighbor_index].add(i)
+
+
+                if y[i] != y[nearest_neighbor_index]:
+                    dissimilarity_sets[i].add(nearest_neighbor_index)
+    
+    return coverage_sets, liability_sets, dissimilarity_sets
 
 
 class BlameBasedNoiseDetector(Algorithm):
@@ -19,57 +76,7 @@ class BlameBasedNoiseDetector(Algorithm):
         y = data_set.labels
         n_points = X.shape[0]
 
-        # Let `a` be the current point i.
-        # Let `b` be one of k-nearest neighbors of i.
-        #
-        # We say that the data point `b` contributes to the correct
-        # classification of the current data point `a`, denoted
-        # Classifies(a,b), if all of the following conditions hold:
-        #  1) Data point `b` is a k-nearest neighbor of `a`
-        #  2) Data point `a` is correctly classified
-        #  3) Data point `b` has the same label as `a`
-        #
-        # We say that the data point `b` contributes to the
-        # incorrect classification of the current data point `a`,
-        # denoted Misclassifies(a,b), if all of the following hold:
-        #  1) Data point `b` is a k-nearest neighbor of `a`
-        #  2) Data point `a` is misclassified
-        #  3) Data point `b` has a different label than `a`
-        
-        # The coverage set of a given data point `b` contains
-        # all data points for which point `b` contributed to their
-        # correct classifications. The covarage set of a point `b`
-        # measures the level of "good" caused by point `b`.
-        coverage_sets = [set() for _ in range(n_points)]
-
-        # The liability set of a given data point `b` contains
-        # all data points for which point `b` contributed to their
-        # incorrect classifications. The liability set of a point `b`
-        # measures the level of "harm" caused by point `b`.
-        liability_sets = [set() for _ in range(n_points)]
-
-        # The dissimilarity set of a given point `b` contains
-        # the nearest neighbors of `b` which contribute to
-        # the misclassification of point `b`.
-        dissimilarity_sets = [set() for _ in range(n_points)]
-        
-        # Build the different sets
-        for i in range(n_points):
-            pred_label, votes, knn_indices = compute_knn(i, self._k, X, y)
-
-            for nearest_neighbor_index in knn_indices:
-                
-                if y[i] == pred_label: # Correctly classified
-                    if y[i] == y[nearest_neighbor_index]:
-                        coverage_sets[nearest_neighbor_index].add(i)
-                
-                else: # Misclassified
-                    if y[i] != y[nearest_neighbor_index]:
-                        liability_sets[nearest_neighbor_index].add(i)
-
-
-                    if y[i] != y[nearest_neighbor_index]:
-                        dissimilarity_sets[i].add(nearest_neighbor_index)
+        coverage_sets, liability_sets, dissimilarity_sets = compute_bbnr_sets(X=X, y=y, k=self._k)
 
         liability_counts = np.array([len(lset) for lset in liability_sets])
 
