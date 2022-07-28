@@ -12,6 +12,8 @@ scipy = "^1.8.0"
 pandas = "^1.4.2"
 click = "^8.1.2"
 scikit-learn = "^1.0.2"
+requests = "^2.27.1"
+tqdm = "^4.64.0"
 
 
 [tool.poetry.dev-dependencies]
